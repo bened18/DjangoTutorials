@@ -36,7 +36,6 @@ class ContactPageView(TemplateView):
           })
           return context
 
-
 class ProductIndexView(View): 
     template_name = 'products/index.html' 
     def get(self, request): 
@@ -46,7 +45,6 @@ class ProductIndexView(View):
         viewData["products"] = Product.objects.all()
         return render(request, self.template_name, viewData) 
 
- 
 class ProductShowView(View): 
 
     template_name = 'products/show.html' 
@@ -80,8 +78,7 @@ class ProductListView(ListView):
         context = super().get_context_data(**kwargs) 
         context['title'] = 'Products - Online Store' 
         context['subtitle'] = 'List of products' 
-        return context
-    
+        return context  
 
 class ProductForm(forms.ModelForm): 
      
@@ -94,8 +91,6 @@ class ProductForm(forms.ModelForm):
         if price <= 0:
             raise forms.ValidationError("Price must be greater than zero.")
         return price
-
- 
 
 class ProductCreateView(View): 
     template_name = 'products/create.html'
@@ -118,3 +113,45 @@ class ProductCreateView(View):
             viewData["title"] = "Create product" 
             viewData["form"] = form 
             return render(request, self.template_name, viewData) 
+
+class CartView(View): 
+
+    template_name = 'cart/index.html' 
+
+    def get(self, request): 
+        # Simulated database for products 
+        products = {} 
+        products[121] = {'name': 'Tv samsung', 'price': '1000'} 
+        products[11] = {'name': 'Iphone', 'price': '2000'} 
+
+        # Get cart products from session 
+        cart_products = {} 
+        cart_product_data = request.session.get('cart_product_data', {}) 
+
+        for key, product in products.items(): 
+            if str(key) in cart_product_data.keys(): 
+                cart_products[key] = product 
+
+        # Prepare data for the view 
+        view_data = { 
+            'title': 'Cart - Online Store', 
+            'subtitle': 'Shopping Cart', 
+            'products': products, 
+            'cart_products': cart_products 
+        } 
+        return render(request, self.template_name, view_data) 
+
+ 
+    def post(self, request, product_id): 
+        # Get cart products from session and add the new product 
+        cart_product_data = request.session.get('cart_product_data', {}) 
+        cart_product_data[product_id] = product_id 
+        request.session['cart_product_data'] = cart_product_data 
+        return redirect('cart_index') 
+
+class CartRemoveAllView(View): 
+    def post(self, request): 
+        # Remove all products from cart in session 
+        if 'cart_product_data' in request.session: 
+            del request.session['cart_product_data'] 
+        return redirect('cart_index')
